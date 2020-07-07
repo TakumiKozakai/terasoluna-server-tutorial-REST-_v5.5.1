@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Built-By: Kozakaitakumi
+Build-Jdk: 11.0.6
+Implementation-Title: TERASOLUNA Server Framework for Java (5.x) Web Bla
+ nk Project (MyBatis3)
+Implementation-Version: 1.0.0-SNAPSHOT
+Implementation-Vendor-Id: com.example.todo
+Implementation-Vendor: TERASOLUNA Framework Team
+Created-By: Maven Integration for Eclipse
+

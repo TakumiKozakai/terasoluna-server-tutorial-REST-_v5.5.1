@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+    ">
+
+    <!-- (1) -->
+    <context:property-placeholder
+        location="classpath*:/META-INF/spring/*.properties" />
+
+    <mvc:annotation-driven>
+        <mvc:message-converters register-defaults="false">
+            <!-- Controllerの引数と返り値で扱うJavaBeanをシリアライズ/デシリアライズするためのクラスを設定する。beanは複数設定可。 -->
+            <bean
+                class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                <!-- MappingJackson2HttpMessageConverterのobjectMapperプロパティに、
+                Jacksonより提供されているObjectMapper(「JSON <-> JavaBean」の変換を行うためのコンポーネント)を指定する。
+                本チュートリアルでは、日時型のフォーマットをカスタマイズしたObjectMapperを指定している。
+                カスタマイズする必要がない場合はobjectMapperプロパティは省略可能である。 -->
+                <property name="objectMapper">
+                    <bean class="com.fasterxml.jackson.databind.ObjectMapper">
+                        <property name="dateFormat">
+                            <!-- ObjectMapperのdateFormatプロパティに、日時型フィールドの形式を指定する。
+                            本チュートリアルでは、java.util.Dateオブジェクトをシリアライズする際にISO-8601形式とする。
+                            Dateオブジェクトをシリアライズする際にISO-8601形式にする場合は、
+                            com.fasterxml.jackson.databind.util.StdDateFormatを設定する事で実現する事ができる。 -->
+                            <bean class="com.fasterxml.jackson.databind.util.StdDateFormat"/>
+                        </property>
+                    </bean>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+    <!-- REST API用のパッケージ配下のコンポーネントをスキャンする。
+    本チュートリアルでは、REST API用のパッケージをcom.example.todo.apiにしている。
+    画面遷移用のControllerは、appパッケージ配下に格納していたが、
+    REST API用のControllerは、apiパッケージ配下に格納する事を推奨する。 -->
+    <context:component-scan base-package="com.example.todo.api" />
+
+    <!-- Controllerの処理開始、終了時の情報をログに出力するために、共通ライブラリから提供されているTraceLoggingInterceptorを定義する。 -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**" />
+            <mvc:exclude-mapping path="/resources/**" />
+            <bean
+                class="org.terasoluna.gfw.web.logging.TraceLoggingInterceptor" />
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+    <!-- Spring MVCのフレームワークでハンドリングされた例外を、ログ出力するためのAOP定義を指定する。 -->
+    <!-- Setting AOP. -->
+    <bean id="handlerExceptionResolverLoggingInterceptor"
+        class="org.terasoluna.gfw.web.exception.HandlerExceptionResolverLoggingInterceptor">
+        <property name="exceptionLogger" ref="exceptionLogger" />
+    </bean>
+    <aop:config>
+        <aop:advisor advice-ref="handlerExceptionResolverLoggingInterceptor"
+            pointcut="execution(* org.springframework.web.servlet.HandlerExceptionResolver.resolveException(..))" />
+    </aop:config>
+
+</beans>
